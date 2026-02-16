@@ -1,0 +1,33 @@
+/* @config "./tailwind.config.js" */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .dashboard-card {
+    @apply bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow;
+  }
+  
+  .filter-input {
+    @apply px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  }
+  
+  .chart-button {
+    @apply px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200;
+  }
+  
+  .chart-button-active {
+    @apply bg-primary-600 text-white;
+  }
+  
+  .chart-button-inactive {
+    @apply bg-gray-200 text-gray-700 hover:bg-gray-300;
+  }
+}
