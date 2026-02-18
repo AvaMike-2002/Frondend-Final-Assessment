@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { SaleData, ChartType } from '@/types/sales';
 import { salesData } from '@/data/mockData';
 import BarChartComponent from '@/components/charts/BarChartComponent';
@@ -24,7 +24,6 @@ export default function DashboardPage() {
     '2023': data.reduce((sum, item) => sum + item.sales2023, 0),
     '2022': data.reduce((sum, item) => sum + item.sales2022, 0),
   };
-
   const totalSales = totals['2024'] + totals['2023'] + totals['2022'];
   const averageGrowth = ((totals['2024'] - totals['2023']) / totals['2023'] * 100).toFixed(1);
 
@@ -33,8 +32,6 @@ export default function DashboardPage() {
     setIsLoading(true);
     try {
       const apiData = await salesApi.getAllSales();
-      
-      // Transform API data to SaleData format
       const transformedData = salesData.map(monthData => {
         const apiForMonth = apiData.filter(item => item.month === monthData.month);
         return {
@@ -44,11 +41,9 @@ export default function DashboardPage() {
           sales2022: apiForMonth.find(item => item.year === 2022)?.sales || monthData.sales2022,
         };
       });
-      
       setData(transformedData);
     } catch (error) {
       console.error('Error fetching API data:', error);
-      // Fallback to mock data
       setData(salesData);
     } finally {
       setIsLoading(false);
@@ -57,12 +52,15 @@ export default function DashboardPage() {
 
   // Toggle between mock and API data
   const toggleDataSource = () => {
-    if (!useApiData) {
-      fetchApiData();
-    } else {
-      setData(salesData);
-    }
+    if (!useApiData) fetchApiData();
+    else setData(salesData);
     setUseApiData(!useApiData);
+  };
+
+  // Reset filters + chart type
+  const handleReset = () => {
+    setChartType('bar');
+    setThreshold(undefined);
   };
 
   // Render chart based on selected type
@@ -83,26 +81,30 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">Sales Dashboard</h1>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={toggleDataSource}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
-              >
-                <Download size={18} />
-                <span>{useApiData ? 'Use Mock Data' : 'Use API Data'}</span>
-              </button>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+          <h1 className="text-3xl font-bold text-gray-900">Sales Dashboard</h1>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <button
+              onClick={toggleDataSource}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2 w-full sm:w-auto"
+            >
+              <Download size={18} />
+              <span>{useApiData ? 'Use Mock Data' : 'Use API Data'}</span>
+            </button>
+            <button
+              onClick={handleReset}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors w-full sm:w-auto"
+            >
+              Reset Filters
+            </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="dashboard-card">
             <div className="flex items-center justify-between">
               <div>
@@ -153,9 +155,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Filters and Controls */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-            <FilterInput onFilterChange={setThreshold} />
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <FilterInput onFilterChange={setThreshold} className="flex-1" />
             <ChartTypeSelector currentType={chartType} onTypeChange={setChartType} />
           </div>
         </div>
@@ -175,39 +177,37 @@ export default function DashboardPage() {
         </div>
 
         {/* Data Table */}
-        <div className="mt-8 dashboard-card">
+        <div className="dashboard-card overflow-x-auto">
           <h2 className="text-xl font-semibold mb-4">Monthly Sales Data</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">2024 Sales</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">2023 Sales</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">2022 Sales</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">YoY Change</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {data.map((item) => {
-                  const yoyChange = ((item.sales2024 - item.sales2023) / item.sales2023 * 100).toFixed(1);
-                  return (
-                    <tr key={item.month}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.month}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.sales2024.toLocaleString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.sales2023.toLocaleString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.sales2022.toLocaleString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`${Number(yoyChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {yoyChange}%
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">2024 Sales</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">2023 Sales</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">2022 Sales</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">YoY Change</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {data.map((item) => {
+                const yoyChange = ((item.sales2024 - item.sales2023) / item.sales2023 * 100).toFixed(1);
+                return (
+                  <tr key={item.month}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.month}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.sales2024.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.sales2023.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.sales2022.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={`${Number(yoyChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {yoyChange}%
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </main>
     </div>
